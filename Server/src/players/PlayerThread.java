@@ -36,9 +36,14 @@ public class PlayerThread extends Thread {
 
     public void run(){
         String commandsLine = null;
-        while((commandsLine = in.nextLine())!=null){
-            System.out.println(commandsLine);
-            handler.handle(commandsLine);
+        try {
+            while ((commandsLine = in.nextLine()) != null) {
+                System.out.println(commandsLine);
+                handler.handle(commandsLine);
+            }
+        }catch (Exception e){
+            System.out.println("游戏桌" + table.getId() + ",玩家" + PlayerThread.this.playerCode + "已掉线");
+            table.removePlayer(PlayerThread.this.playerCode);
         }
     }
 
@@ -90,7 +95,7 @@ public class PlayerThread extends Thread {
                     responseString = onRequestQuitTable();
                     break;
                 case "RESPOND_RETRACT":
-                    responseString = onRequestReposeRetract(Boolean.parseBoolean(commands[1]));
+                    responseString = onRequestReposedRetract(Boolean.parseBoolean(commands[1]));
                     break;
                 case "RETRACT":
                     responseString = onRequestRetract();
@@ -108,13 +113,28 @@ public class PlayerThread extends Thread {
         }
 
         private String onRequestLogin(String userName, String password){
-
-            return Signal.ON_RESPOND_LOGIN + "#是否登陆成功#玩家的分数#登录失败的原因";
+            boolean isLogin = false;
+            int score = 0;
+            String reason = "玩家不存在";
+//            if(db.find(userName,password))
+//            {
+//                playerInfo = new PlayerInfo(userName,score);
+//                score =;
+//                reason = "登录成功";
+//            }
+            return Signal.ON_RESPOND_LOGIN + "#" + isLogin + "#" + score + "#" + reason;
         }
 
         private String onRequestRegister(String userName, String password){
-
-            return Signal.ON_RESPOND_REGISTER+"#是否注册成功#注册失败的原因";
+            boolean isRegister = true;
+            String reason = "注册成功";
+//            if(db.find(userName)){
+//                isRegister = false;
+//                reason = "玩家已存在";
+//            }else{
+//                db.insert(userName,password,0);
+//            }
+            return Signal.ON_RESPOND_REGISTER+"#" + isRegister + "#" + reason;
         }
 
         private String onRequestEnterTables(int tableId){
@@ -139,8 +159,8 @@ public class PlayerThread extends Thread {
         }
 
         private String onRequestGiveUp(){
-
-            return Signal.ON_GAME_OVER+"#是否是平局#是否是自己赢#是否是某一方认输";
+            table.sendMessage(Signal.ON_GAME_OVER + "#" + false + "#" +true + "#" +true, PlayerThread.this.playerCode);
+            return Signal.ON_GAME_OVER+"#" + false + "#" + false+ "#" + false;
         }
 
         private String onRequestHandUp(){
@@ -152,15 +172,22 @@ public class PlayerThread extends Thread {
         }
 
         private String onRequestQuitTable(){
-            return Signal.ON_RESPOND_QUIT_TABLE+"#退出游戏桌是否成功";
+            table.removePlayer(PlayerThread.this.playerCode);
+            table = null;
+            return Signal.ON_RESPOND_QUIT_TABLE+"#"+ Boolean.TRUE;
         }
 
-        private String onRequestReposeRetract(boolean ifAgree){
-            return Signal.ON_RESPOND_RETRACT+"#ifAgree";
+        private String onRequestReposedRetract(boolean ifAgree){
+            if(ifAgree){
+                table.retract(PlayerThread.this.playerCode);
+            }
+            table.sendMessage(Signal.ON_RESPOND_RETRACT + "#" + ifAgree,PlayerThread.this.playerCode);
+            return null;
         }
 
         private String onRequestRetract(){
-            return Signal.ON_OPPONENT_RETRACT;
+            table.sendMessage(Signal.ON_OPPONENT_RETRACT, PlayerThread.this.playerCode);
+            return null;
         }
 
         private String onRequestSendMessage(String message){
