@@ -42,7 +42,7 @@ public class PlayerThread extends Thread {
                 handler.handle(commandsLine);
             }
         }catch (Exception e){
-            System.out.println("游戏桌" + table.getId() + ",玩家" + PlayerThread.this.playerCode + "已掉线");
+            System.out.println("玩家"+socket.getInetAddress().toString()+"已掉线");
             table.removePlayer(PlayerThread.this.playerCode);
         }
     }
@@ -116,6 +116,7 @@ public class PlayerThread extends Thread {
             boolean isLogin = false;
             int score = 0;
             String reason = "玩家不存在";
+            playerInfo = new PlayerInfo("test",100);
 //            if(db.find(userName,password))
 //            {
 //                playerInfo = new PlayerInfo(userName,score);

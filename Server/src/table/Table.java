@@ -4,7 +4,7 @@ import GoBangSandBox.Sandbox;
 import players.PlayerInfo;
 import players.PlayerThread;
 
-public class Table implements Runnable {
+public class Table {
 
     private final int ID;
 
@@ -34,10 +34,10 @@ public class Table implements Runnable {
     }
 
     public void removePlayer(int playerCode){
-        if(player1.getPlayerCode() == playerCode){
+        if(player1!=null && player1.getPlayerCode() == playerCode){
             player1 = null;
         }
-        if(player2.getPlayerCode() == playerCode){
+        if(player2!=null && player2.getPlayerCode() == playerCode){
             player2 = null;
         }
     }
@@ -52,9 +52,15 @@ public class Table implements Runnable {
     }
 
     public TableInfo getTableInfo(){
-        PlayerInfo p1 = player1.getPlayerInfo();
-        PlayerInfo p2 = player2.getPlayerInfo();
+        PlayerInfo p1 = player1 == null? new PlayerInfo("empty",-1) : player1.getPlayerInfo();
+        PlayerInfo p2 = player2 == null? new PlayerInfo("empty",-1) : player2.getPlayerInfo();
         return new TableInfo(ID,p1.name,p1.score,p2.name,p2.score);
+    }
+
+    public void clear(){
+        player1 = null;
+        player2 = null;
+        sandBox.init();
     }
 
     public void retract(int playerCode){
@@ -79,10 +85,5 @@ public class Table implements Runnable {
 
     public boolean isFull(){
         return player1!=null && player2!=null;
-    }
-
-    @Override
-    public void run() {
-
     }
 }
