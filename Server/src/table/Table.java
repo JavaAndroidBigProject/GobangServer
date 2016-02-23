@@ -1,6 +1,7 @@
 package table;
 
 import GoBangSandBox.Sandbox;
+import helper.Result;
 import players.PlayerInfo;
 import players.PlayerThread;
 
@@ -70,16 +71,26 @@ public class Table {
             sandBox.regret(Sandbox.Player.BLACK);
     }
 
-    public void judge(){
+    public void move(int playerCode, int row, int col){
+        if(playerCode == 1){
+            sandBox.move(Sandbox.Player.WHITE,row,col);
+        }
+        if(playerCode == 2){
+            sandBox.move(Sandbox.Player.BLACK,row,col);
+        }
+    }
+
+    public Result checkWin(int playerCode){
         Sandbox.Player player = sandBox.getWinner();
         if(player == Sandbox.Player.UNKNOWN){
-
-        }else if(player == Sandbox.Player.BLACK){
-
-        }else if(player == Sandbox.Player.WHITE){
-
+            return Result.NONE;
+        }else if(player == Sandbox.Player.BLACK && playerCode == 2
+                || player == Sandbox.Player.WHITE && playerCode == 1){
+            return Result.WIN;
         }else if(player == Sandbox.Player.NONE){
-
+            return Result.DRAW;
+        }else{
+            return Result.LOSE;
         }
     }
 

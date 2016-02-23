@@ -1,5 +1,6 @@
 package players;
 
+import helper.Result;
 import helper.Signal;
 import message.User;
 import table.Table;
@@ -15,6 +16,8 @@ import login.ImplementLogin;
 import regist.ImplementRegist;
 import registed.ImplementIsRegist;
 import update.ImplementUpdate;
+
+import static helper.Result.*;
 
 public class PlayerThread extends Thread {
     private int playerCode;
@@ -95,7 +98,7 @@ public class PlayerThread extends Thread {
                     responseString = onRequestHandUp();
                     break;
                 case "MOVE":
-                    responseString = onRequestMove();
+                    responseString = onRequestMove(Integer.parseInt(commands[1]),Integer.parseInt(commands[2]));
                     break;
                 case "QUIT_TABLE":
                     responseString = onRequestQuitTable();
@@ -186,8 +189,26 @@ public class PlayerThread extends Thread {
             return Signal.ON_TABLE_CHANGE+"handleup";
         }
 
-        private String onRequestMove(){
-            return "move";
+        private String onRequestMove(int row, int col){
+            table.move(PlayerThread.this.playerCode,row,col);
+
+            boolean isDraw = false,isWin = false,isOpponentGiveUp = false;
+            switch(table.checkWin(PlayerThread.this.playerCode)){
+                case WIN:
+                    table.sendMessage(Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp,PlayerThread.this.playerCode);
+                    isWin = true;
+                    return Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp;
+
+                case DRAW:
+                    isDraw = true;
+                    table.sendMessage(Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp,PlayerThread.this.playerCode);
+                    return Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp;
+                case NONE:
+                    break;
+                case LOSE:
+                    break;
+            }
+            return null;
         }
 
         private String onRequestQuitTable(){
