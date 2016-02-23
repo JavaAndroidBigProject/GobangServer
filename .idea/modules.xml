@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/Client/Client.iml" filepath="$PROJECT_DIR$/Client/Client.iml" />
       <module fileurl="file://$PROJECT_DIR$/GobangServer.iml" filepath="$PROJECT_DIR$/GobangServer.iml" />
       <module fileurl="file://$PROJECT_DIR$/Server/Server.iml" filepath="$PROJECT_DIR$/Server/Server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../DatabaseInterface/UserInformation/UserInformation.iml" filepath="$PROJECT_DIR$/../DatabaseInterface/UserInformation/UserInformation.iml" />
     </modules>
   </component>
 </project>

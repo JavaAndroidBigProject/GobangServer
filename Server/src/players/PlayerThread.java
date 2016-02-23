@@ -1,6 +1,7 @@
 package players;
 
 import helper.Signal;
+import message.User;
 import table.Table;
 import table.TableInfo;
 import table.Tables;
@@ -9,6 +10,11 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Scanner;
+
+import login.ImplementLogin;
+import regist.ImplementRegist;
+import registed.ImplementIsRegist;
+import update.ImplementUpdate;
 
 public class PlayerThread extends Thread {
     private int playerCode;
@@ -114,27 +120,39 @@ public class PlayerThread extends Thread {
 
         private String onRequestLogin(String userName, String password){
             boolean isLogin = false;
-            int score = 0;
-            String reason = "玩家不存在";
-            playerInfo = new PlayerInfo("test",100);
-//            if(db.find(userName,password))
-//            {
-//                playerInfo = new PlayerInfo(userName,score);
-//                score =;
-//                reason = "登录成功";
-//            }
+
+            String reason = null;
+
+            ImplementLogin implementLogin = new ImplementLogin();
+
+            int score = implementLogin.login(new User(userName,password,0));
+
+            if(score == -1)
+            {
+                score = 0;
+                reason = "玩家不存在";
+            }else if(score == -2){
+                score = 0;
+                reason = "密码错误";
+            }else{
+                playerInfo = new PlayerInfo(userName,score);
+                isLogin = true;
+                reason = "登录成功";
+            }
             return Signal.ON_RESPOND_LOGIN + "#" + isLogin + "#" + score + "#" + reason;
         }
 
         private String onRequestRegister(String userName, String password){
+            ImplementIsRegist isRegist = new ImplementIsRegist();
+
             boolean isRegister = true;
             String reason = "注册成功";
-//            if(db.find(userName)){
-//                isRegister = false;
-//                reason = "玩家已存在";
-//            }else{
-//                db.insert(userName,password,0);
-//            }
+            if(isRegist.isRegisted(new User(userName,password,0))){
+                isRegister = false;
+                reason = "玩家已存在";
+            }else{
+                new ImplementRegist().regist(new User(userName,password,0));
+            }
             return Signal.ON_RESPOND_REGISTER+"#" + isRegister + "#" + reason;
         }
 

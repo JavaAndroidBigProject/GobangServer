@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Client {
     public static void main(String[] args){
         try {
-            Socket socket  = new Socket("115.28.37.166",4000);
+            Socket socket  = new Socket("127.0.0.1",4000);
             PrintStream ps = new PrintStream(socket.getOutputStream());
             Scanner in = new Scanner(socket.getInputStream());
             Scanner cin = new Scanner(System.in);
