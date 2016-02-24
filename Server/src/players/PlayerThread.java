@@ -1,8 +1,10 @@
 package players;
 
-import helper.Result;
 import helper.Signal;
 import message.User;
+import login.ImplementLogin;
+import regist.ImplementRegist;
+import registed.ImplementIsRegist;
 import table.Table;
 import table.TableInfo;
 import table.Tables;
@@ -11,13 +13,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Scanner;
-
-import login.ImplementLogin;
-import regist.ImplementRegist;
-import registed.ImplementIsRegist;
-import update.ImplementUpdate;
-
-import static helper.Result.*;
 
 public class PlayerThread extends Thread {
     private int playerCode;
@@ -212,9 +207,13 @@ public class PlayerThread extends Thread {
         }
 
         private String onRequestQuitTable(){
-            table.removePlayer(PlayerThread.this.playerCode);
-            table = null;
-            return Signal.ON_RESPOND_QUIT_TABLE+"#"+ Boolean.TRUE;
+            if(table !=null) {
+                table.removePlayer(PlayerThread.this.playerCode);
+                table = null;
+                return Signal.ON_RESPOND_QUIT_TABLE + "#" + Boolean.TRUE;
+            }else{
+                return Signal.ON_RESPOND_QUIT_TABLE + "#" + Boolean.FALSE;
+            }
         }
 
         private String onRequestReposedRetract(boolean ifAgree){

@@ -2,10 +2,9 @@
   <artifact type="jar" name="Server">
     <output-path>$PROJECT_DIR$/out/artifacts/Server</output-path>
     <root id="archive" name="Server.jar">
-      <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/Server/META-INF/MANIFEST.MF" />
-      </element>
       <element id="module-output" name="Server" />
+      <element id="module-output" name="UserInformation" />
+      <element id="extracted-dir" path="F:/jars/mysql-connector-java-5.1.38/mysql-connector-java-5.1.38-bin.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

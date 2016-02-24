@@ -1,12 +1,13 @@
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args){
         try {
-            Socket socket  = new Socket("127.0.0.1",4000);
+            Socket socket  = new Socket(InetAddress.getByName("www.yidea.xyz"),4000);
             PrintStream ps = new PrintStream(socket.getOutputStream());
             Scanner in = new Scanner(socket.getInputStream());
             Scanner cin = new Scanner(System.in);
