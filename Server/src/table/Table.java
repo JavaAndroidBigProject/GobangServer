@@ -43,6 +43,63 @@ public class Table {
         }
     }
 
+    public boolean isStart(){
+        return player1 != null && player1.isHandUp() && player2!=null && player2.isHandUp();
+    }
+
+    public String getOtherName(int playerCode){
+        if(playerCode == 1)
+            return player2 == null ? "empty" : player2.getPlayerInfo().name;
+        else
+            return player1 == null ? "empty" : player1.getPlayerInfo().name;
+    }
+
+    public int getOtherScore(int playerCode){
+        if(playerCode == 1)
+            return player2 == null ? -1 : player2.getPlayerInfo().score;
+        else
+            return player1 == null ? -1 : player1.getPlayerInfo().score;
+    }
+
+    public boolean isOtherHandUp(int playerCode){
+        if(playerCode == 1)
+            return player2 == null ? false : player2.isHandUp();
+        else
+            return player1 == null ? false : player1.isHandUp();
+    }
+
+    public boolean isPlayerTurn(int playerCode){
+        Sandbox.Player next = sandBox.getNextPlayer();
+        return playerCode == 1 && next == Sandbox.Player.WHITE || playerCode == 2 && next == Sandbox.Player.BLACK;
+    }
+
+    public void opponentWin(int playerCode){
+        if(playerCode == 1)
+            player2.win();
+        else
+            player1.win();
+    }
+
+    public void opponentLose(int playerCode){
+        if(playerCode == 1)
+            player2.lose();
+        else
+            player1.lose();
+    }
+
+    public String getChessBoard(){
+        int[][] matrix = sandBox.getMatrix();
+
+        StringBuilder result = new StringBuilder("");
+        for(int[] row : matrix){
+            for(int i : row){
+                result.append(i);
+            }
+        }
+
+        return result.toString();
+    }
+
     public void sendMessage(String message, int sendPlayerCode){
         if (player1!=null && player1.getPlayerCode() != sendPlayerCode) {
             player1.receiveMessage(message);

@@ -8,6 +8,7 @@ import registed.ImplementIsRegist;
 import table.Table;
 import table.TableInfo;
 import table.Tables;
+import update.ImplementUpdate;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -15,12 +16,13 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class PlayerThread extends Thread {
-    private int playerCode;
+    private int playerCode = 0;
 
     private Socket socket = null;
     private Tables tables = null;
     private Table table = null;
     private PlayerInfo playerInfo = null;
+    private boolean handUp = false;
 
     private PrintStream printStream= null;
     private Scanner in = null;
@@ -39,17 +41,29 @@ public class PlayerThread extends Thread {
     }
 
     public void run(){
-        String commandsLine = null;
-        try {
-            while ((commandsLine = in.nextLine()) != null) {
-                System.out.println(commandsLine);
-                handler.handle(commandsLine);
-            }
-        }catch (Exception e){
-            System.out.println("玩家"+socket.getInetAddress().toString()+"已掉线");
-            table.removePlayer(PlayerThread.this.playerCode);
-        }
-    }
+        String commandsLine;
+       try {
+           while ((commandsLine = in.nextLine()) != null) {
+               System.out.println(commandsLine);
+               handler.handle(commandsLine);
+           }
+           System.out.println("玩家  " + socket.getInetAddress().toString() + " 已掉线");
+       }catch (Exception e){
+           System.out.println("玩家  "+socket.getInetAddress().toString()+" 已掉线");
+       }finally {
+           if(table !=null ) {
+               if(table.isStart()) {
+                   table.sendMessage(Signal.ON_GAME_OVER + "#" + false + "#" + true + "#" + true, PlayerThread.this.playerCode);
+                   table.opponentWin(playerCode);
+                   table.clear();
+               }else{
+                   table.removePlayer(playerCode);
+               }
+           }
+
+           in.close();
+       }
+  }
 
     public int getPlayerCode(){
         return this.playerCode;
@@ -57,6 +71,49 @@ public class PlayerThread extends Thread {
 
     public void setPlayerCode(int playerCode){
         this.playerCode = playerCode;
+    }
+
+    public boolean isHandUp(){
+        return this.handUp;
+    }
+
+    public void setHandUp(boolean handUp){
+        this.handUp = handUp;
+    }
+
+    public boolean isBlack(){
+        return playerCode == 2;
+    }
+
+    public boolean isMyTurn(){
+        return table.isPlayerTurn(playerCode);
+    }
+
+    public String getOpponentName(){
+        return table.getOtherName(playerCode);
+    }
+
+    public int getOpponentScore(){
+        return table.getOtherScore(playerCode);
+    }
+
+    private void saveScore(){
+        new ImplementUpdate().update(new User(playerInfo.name,"",playerInfo.score));
+    }
+
+    public void win(){
+        playerInfo.score += 2;
+        saveScore();
+    }
+
+    public void lose(){
+        if(playerInfo.score > 0)
+            playerInfo.score -= 1;
+        saveScore();
+    }
+
+    public boolean isOpponentHandUp(){
+        return table.isOtherHandUp(playerCode);
     }
 
     public PlayerInfo getPlayerInfo(){
@@ -105,7 +162,8 @@ public class PlayerThread extends Thread {
                     responseString = onRequestRetract();
                     break;
                 case "SEND_MESSAGE":
-                    responseString = onRequestSendMessage(commands[1]);
+                    String message = commands.length < 2 ? " " : commands[1];
+                    responseString = onRequestSendMessage(message);
                     break;
                 default:
                     break;
@@ -165,7 +223,10 @@ public class PlayerThread extends Thread {
             }else{
                 isEnter = true;
                 reason = "成功进入游戏桌";
+                printStream.println(Signal.ON_RESPOND_ENTER_TABLE+"#"+ tableId + "#" + isEnter + "#" + reason);
                 table.addPlayer(PlayerThread.this);
+                table.sendMessage(getOpponentTableChangeString(),playerCode);
+                return getMyTableChangeString();
             }
 
             return Signal.ON_RESPOND_ENTER_TABLE+"#"+ tableId + "#" + isEnter + "#" + reason;
@@ -176,12 +237,35 @@ public class PlayerThread extends Thread {
         }
 
         private String onRequestGiveUp(){
-            table.sendMessage(Signal.ON_GAME_OVER + "#" + false + "#" +true + "#" +true, PlayerThread.this.playerCode);
+            table.sendMessage(Signal.ON_GAME_OVER + "#" + false + "#" +true + "#" +true, playerCode);
+            lose();
+            table.opponentWin(playerCode);
+            table.clear();
+
             return Signal.ON_GAME_OVER+"#" + false + "#" + false+ "#" + false;
         }
 
+        private String getMyTableChangeString(){
+            return Signal.ON_TABLE_CHANGE + "#" + playerInfo.name + "#" + playerInfo.score +
+                    "#" + getOpponentName() + "#" + getOpponentScore() + "#" + isHandUp() +
+                    "#" + isOpponentHandUp() + "#" + table.isStart()+ "#" + table.getChessBoard()  +
+                    "#" + isBlack() + "#" + isMyTurn();
+        }
+
+        private String getOpponentTableChangeString(){
+            return Signal.ON_TABLE_CHANGE + "#" + getOpponentName() + "#" + getOpponentScore()+
+                    "#" + playerInfo.name + "#" + playerInfo.score  + "#" + isOpponentHandUp() +
+                    "#" + isHandUp() + "#" + table.isStart()+ "#" + table.getChessBoard()  +
+                    "#" + !isBlack() + "#" + !isMyTurn();
+        }
+
         private String onRequestHandUp(){
-            return Signal.ON_TABLE_CHANGE+"handleup";
+            PlayerThread.this.setHandUp(true);
+            if(table.isStart())
+                table.sendMessage(getOpponentTableChangeString(),playerCode);
+            return getMyTableChangeString();
+
+            //ON_TABLE_CHANGE#自己用户名#自己分数#对手用户名#对手分数#自己是否举手#对手是否举手#游戏是否进行中#棋盘的逻辑数组#自己是否执黑子#是否轮到自己下
         }
 
         private String onRequestMove(int row, int col){
@@ -192,14 +276,21 @@ public class PlayerThread extends Thread {
                 case WIN:
                     table.sendMessage(Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp,PlayerThread.this.playerCode);
                     isWin = true;
+                    win();
+                    table.opponentLose(playerCode);
+                    table.clear();
+                    table = null;
                     return Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp;
 
                 case DRAW:
                     isDraw = true;
                     table.sendMessage(Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp,PlayerThread.this.playerCode);
+                    table.clear();
+                    table = null;
                     return Signal.ON_GAME_OVER + "#" + isDraw + "#" + isWin + "#" + isOpponentGiveUp;
                 case NONE:
-                    break;
+                    table.sendMessage(getOpponentTableChangeString(),playerCode);
+                    return getMyTableChangeString();
                 case LOSE:
                     break;
             }
@@ -207,18 +298,26 @@ public class PlayerThread extends Thread {
         }
 
         private String onRequestQuitTable(){
-            if(table !=null) {
+            if(!table.isStart()) {
                 table.removePlayer(PlayerThread.this.playerCode);
+                table.sendMessage(getOpponentTableChangeString(),playerCode);
                 table = null;
-                return Signal.ON_RESPOND_QUIT_TABLE + "#" + Boolean.TRUE;
+                PlayerThread.this.setHandUp(false);
             }else{
-                return Signal.ON_RESPOND_QUIT_TABLE + "#" + Boolean.FALSE;
+                table.sendMessage(Signal.ON_GAME_OVER + "#" + false + "#" + true + "#" + true,PlayerThread.this.playerCode);
+                lose();
+                table.opponentWin(playerCode);
+                table.clear();
+                table = null;
             }
+            return null;
         }
 
         private String onRequestReposedRetract(boolean ifAgree){
             if(ifAgree){
                 table.retract(PlayerThread.this.playerCode);
+                table.sendMessage(getOpponentTableChangeString(),playerCode);
+                return getMyTableChangeString();
             }
             table.sendMessage(Signal.ON_RESPOND_RETRACT + "#" + ifAgree,PlayerThread.this.playerCode);
             return null;
