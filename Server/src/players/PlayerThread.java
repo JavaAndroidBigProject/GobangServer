@@ -10,9 +10,12 @@ import table.TableInfo;
 import table.Tables;
 import update.ImplementUpdate;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
 public class PlayerThread extends Thread {
@@ -25,7 +28,7 @@ public class PlayerThread extends Thread {
     private boolean handUp = false;
 
     private PrintStream printStream= null;
-    private Scanner in = null;
+    private BufferedReader in = null;
     private Handler handler = new Handler();
 
 
@@ -33,8 +36,8 @@ public class PlayerThread extends Thread {
         this.tables = tables;
         this.socket = socket;
         try {
-            printStream = new PrintStream(socket.getOutputStream(),true,"utf-8");
-            in = new Scanner(socket.getInputStream(),"utf-8");
+            printStream = new PrintStream(socket.getOutputStream(),false,"utf-8");
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream(),"utf-8"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,40 +46,49 @@ public class PlayerThread extends Thread {
     public void run(){
         String commandsLine;
         try {
-           while (true) {
-               //socket.sendUrgentData(1);
-               if((commandsLine = in.nextLine()) != null) {
-                   if (!commandsLine.equals("GET_TABLES"))
-                       System.out.println(commandsLine);
-                   handler.handle(commandsLine);
-               }
+            socket.setSoTimeout(3000);
+           while((commandsLine = in.readLine()) != null) {
+               if (!commandsLine.equals("GET_TABLES"))
+                   System.out.println(commandsLine);
+               handler.handle(commandsLine);
            }
            //System.out.println("玩家  " + socket.getInetAddress().toString() + " 已掉线");
        }catch (Exception e){
-           // e.printStackTrace();
-           System.out.println("玩家  "+socket.getInetAddress().toString()+" 已掉线");
+           if(e instanceof SocketTimeoutException)
+               System.out.println("超时");
        }finally {
-           if(table !=null ) {
-               if(table.isStart()) {
-                   table.sendMessage(Signal.ON_GAME_OVER + "#" + false + "#" + true + "#" + true, PlayerThread.this.playerCode);
-                   table.opponentWin(playerCode);
-                   table.init();
-                   table.sendMessage(getOpponentTableChangeString(),playerCode);
-               }else{
-                   table.removePlayer(playerCode);
-               }
-           }
-            if(playerInfo != null)
-                tables.removeLoginedPlayer(playerInfo.name);
-
-           in.close();
+           handPlayerQuit();
             try {
-                socket.close();
+                in.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
   }
+
+    public boolean checkLostConnect(){
+        printStream.println("TEST");
+
+        return printStream.checkError();
+    }
+
+    public void handPlayerQuit(){
+        System.out.println("玩家  "+socket.getInetAddress().toString()+" 已掉线");
+        if(table !=null ) {
+            if(table.isStart()) {
+                table.sendMessage(Signal.ON_GAME_OVER + "#" + false + "#" + true + "#" + true, PlayerThread.this.playerCode);
+                table.opponentWin(playerCode);
+                table.init();
+                table.sendMessage(getOpponentTableChangeString(),playerCode);
+            }else{
+                table.removePlayer(playerCode);
+            }
+        }
+        if(playerInfo != null) {
+            tables.removeLoginedPlayer(playerInfo.name);
+            System.out.println("移除用户 " + playerInfo.name);
+        }
+    }
 
     public int getPlayerCode(){
         return this.playerCode;

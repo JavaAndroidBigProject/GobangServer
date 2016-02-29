@@ -1,5 +1,6 @@
 package table;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Tables {
@@ -24,9 +25,11 @@ public class Tables {
     }
 
     public void removeLoginedPlayer(String userName){            //移除已登录用户名
-        for(String s : loginedPlayer){
+        Iterator<String> it = loginedPlayer.iterator();
+        while(it.hasNext()){
+            String s = it.next();
             if(s.equals(userName))
-                loginedPlayer.remove(s);
+                it.remove();
         }
     }
 
