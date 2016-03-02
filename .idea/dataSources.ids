@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="dataSourceStorage">
+  <data-source name="MySQL - user_information@120.27.120.124" uuid="685572a2-a4f7-4a09-ac8b-f2cf0fbc3020">
+    <database-info product="MySQL" version="5.6.29" jdbc-version="4.0" driver-name="MySQL Connector Java" driver-version="mysql-connector-java-5.1.35 ( Revision: 5fb9c5849535c13917c2cf9baaece6ef9693ef27 )">
+      <extra-name-characters>#@</extra-name-characters>
+      <identifier-quote-string>`</identifier-quote-string>
+    </database-info>
+    <case-sensitivity plain-identifiers="exact" quoted-identifiers="exact"/>
+    <database-model serializer="dbm" rdbms="MYSQL" format-version="2.4">
+      <schema id="1" name="user_information"/>
+      <table id="2" parent="1" name="user_score"/>
+      <column id="3" parent="2" name="username">
+        <mandatory>1</mandatory>
+        <data-type>varchar(30)</data-type>
+      </column>
+      <column id="4" parent="2" name="password">
+        <mandatory>1</mandatory>
+        <data-type>varchar(20)</data-type>
+      </column>
+      <column id="5" parent="2" name="score">
+        <data-type>int(20)</data-type>
+      </column>
+      <index id="6" parent="2" name="uname">
+        <columns>username</columns>
+        <desc-columns></desc-columns>
+        <unique>1</unique>
+      </index>
+      <key id="7" parent="2" name="uname">
+        <columns>username</columns>
+        <underlying-index>uname</underlying-index>
+      </key>
+    </database-model>
+  </data-source>
+</component>

@@ -4,17 +4,12 @@ import table.Tables;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DaemonThread extends Thread{
 
     private final int port = 4000;
     private ServerSocket serverSocket = null;
     private Tables tables = null;
-    private LinkedList<PlayerThread> players = new LinkedList<>();
 
     public DaemonThread(){
         try {
@@ -32,7 +27,6 @@ public class DaemonThread extends Thread{
             try {
                 Socket socket = serverSocket.accept();
                 PlayerThread pt = new PlayerThread(socket,tables);
-                //players.add(pt);
                 pt.start();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -40,32 +34,8 @@ public class DaemonThread extends Thread{
         }
     }
 
-    public void managePlayers(){          //无效啊
-        while(true){
-            try {
-                sleep(4000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            Iterator<PlayerThread> it = players.iterator();
-            while(it.hasNext()){
-                PlayerThread p = it.next();
-                if(!p.isAlive()){
-                    it.remove();
-                    continue;
-                }
-                if(p.checkLostConnect()){
-                    System.out.println("检测到退出");
-                    p.handPlayerQuit();
-                    it.remove();
-                }
-            }
-        }
-    }
-
     public static void main(String[] args){
         DaemonThread daemonThread = new DaemonThread();
         daemonThread.start();
-        //daemonThread.managePlayers();
     }
 }

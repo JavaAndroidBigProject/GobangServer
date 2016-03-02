@@ -28,7 +28,7 @@ public class PlayerThread extends Thread {
     private boolean handUp = false;
 
     private PrintStream printStream= null;
-    private BufferedReader in = null;
+    private Scanner in = null;
     private Handler handler = new Handler();
 
 
@@ -37,7 +37,7 @@ public class PlayerThread extends Thread {
         this.socket = socket;
         try {
             printStream = new PrintStream(socket.getOutputStream(),false,"utf-8");
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream(),"utf-8"));
+            in = new Scanner(socket.getInputStream(),"utf-8");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,31 +46,19 @@ public class PlayerThread extends Thread {
     public void run(){
         String commandsLine;
         try {
-            socket.setSoTimeout(3000);
-           while((commandsLine = in.readLine()) != null) {
+            socket.setSoTimeout(10000);
+           while((commandsLine = in.nextLine())!=null) {
                if (!commandsLine.equals("GET_TABLES"))
                    System.out.println(commandsLine);
                handler.handle(commandsLine);
            }
-           //System.out.println("玩家  " + socket.getInetAddress().toString() + " 已掉线");
        }catch (Exception e){
-           if(e instanceof SocketTimeoutException)
-               System.out.println("超时");
+            System.out.println("超时");
        }finally {
            handPlayerQuit();
-            try {
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+           in.close();
         }
   }
-
-    public boolean checkLostConnect(){
-        printStream.println("TEST");
-
-        return printStream.checkError();
-    }
 
     public void handPlayerQuit(){
         System.out.println("玩家  "+socket.getInetAddress().toString()+" 已掉线");
@@ -86,7 +74,7 @@ public class PlayerThread extends Thread {
         }
         if(playerInfo != null) {
             tables.removeLoginedPlayer(playerInfo.name);
-            System.out.println("移除用户 " + playerInfo.name);
+            System.out.println("移除已登录用户 " + playerInfo.name);
         }
     }
 
